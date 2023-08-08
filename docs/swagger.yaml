@@ -124,7 +124,7 @@ paths:
       - application/json
       description: create new recipe
       parameters:
-      - description: New receipe
+      - description: New recipe
         in: body
         name: recipe
         required: true
@@ -139,6 +139,10 @@ paths:
             $ref: '#/definitions/models.Recipe'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/models.Error'
       summary: Create recipe
@@ -161,15 +165,15 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.Message'
-        "404":
-          description: Not Found
+        "400":
+          description: Bad Request
           schema:
             $ref: '#/definitions/models.Error'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.Error'
-      summary: Update recipes
+      summary: Delete recipe
       tags:
       - recipes
     get:
@@ -188,6 +192,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/models.Recipe'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
         "404":
           description: Not Found
           schema:
@@ -196,7 +204,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.Error'
-      summary: Update recipes
+      summary: List recipe
       tags:
       - recipes
     put:
@@ -220,20 +228,16 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Recipe'
+            $ref: '#/definitions/models.Message'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/models.Error'
-        "404":
-          description: Not Found
           schema:
             $ref: '#/definitions/models.Error'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.Error'
-      summary: Update recipes
+      summary: Update recipe
       tags:
       - recipes
   /recipes/search:
@@ -259,7 +263,11 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/models.Error'
-      summary: Update recipes
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: Search recipes by tag
       tags:
       - recipes
 securityDefinitions:

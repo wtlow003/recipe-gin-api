@@ -70,7 +70,7 @@ const docTemplate = `{
                 "summary": "Create recipe",
                 "parameters": [
                     {
-                        "description": "New receipe",
+                        "description": "New recipe",
                         "name": "recipe",
                         "in": "body",
                         "required": true,
@@ -91,6 +91,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.Error"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
                     }
                 }
             }
@@ -106,7 +112,7 @@ const docTemplate = `{
                 "tags": [
                     "recipes"
                 ],
-                "summary": "Update recipes",
+                "summary": "Search recipes by tag",
                 "parameters": [
                     {
                         "type": "string",
@@ -131,6 +137,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/models.Error"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
                     }
                 }
             }
@@ -146,7 +158,7 @@ const docTemplate = `{
                 "tags": [
                     "recipes"
                 ],
-                "summary": "Update recipes",
+                "summary": "List recipe",
                 "parameters": [
                     {
                         "type": "string",
@@ -161,6 +173,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/models.Recipe"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
                         }
                     },
                     "404": {
@@ -187,7 +205,7 @@ const docTemplate = `{
                 "tags": [
                     "recipes"
                 ],
-                "summary": "Update recipes",
+                "summary": "Update recipe",
                 "parameters": [
                     {
                         "type": "string",
@@ -210,17 +228,11 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Recipe"
+                            "$ref": "#/definitions/models.Message"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/models.Error"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/models.Error"
                         }
@@ -243,7 +255,7 @@ const docTemplate = `{
                 "tags": [
                     "recipes"
                 ],
-                "summary": "Update recipes",
+                "summary": "Delete recipe",
                 "parameters": [
                     {
                         "type": "string",
@@ -260,8 +272,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/models.Message"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/models.Error"
                         }
