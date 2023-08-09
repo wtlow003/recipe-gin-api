@@ -1,4 +1,4 @@
-package db
+package databases
 
 import (
 	"context"
@@ -18,7 +18,7 @@ var (
 	connect = func(ctx context.Context, client *mongo.Client) error {
 		return client.Connect(ctx)
 	}
-	ping = func(ctx context.Context, client *mongo.Client) error {
+	mPing = func(ctx context.Context, client *mongo.Client) error {
 		return client.Ping(ctx, nil)
 	}
 )
@@ -36,7 +36,7 @@ func ConnectToMongoDB(ctx context.Context, user, password, host, database, port 
 	if err != nil {
 		log.Fatalf("Failed to connect to MongoDB server, err = %s", err)
 	}
-	err = ping(ctx, client)
+	err = mPing(ctx, client)
 	if err != nil {
 		log.Fatalf("Failed to ping MongoDB server, err = %s", err)
 	}
