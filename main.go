@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/exp/slices"
 
-	"github.com/wtlow003/recipe-gin-api/db"
+	databases "github.com/wtlow003/recipe-gin-api/db"
 	_ "github.com/wtlow003/recipe-gin-api/docs"
 	"github.com/wtlow003/recipe-gin-api/handlers"
 	"github.com/wtlow003/recipe-gin-api/models"
@@ -44,7 +44,7 @@ func init() {
 
 	// setup mongodb connections
 	ctx := context.Background()
-	db, err := db.ConnectToMongoDB(
+	mongoDB, err := databases.ConnectToMongoDB(
 		ctx,
 		os.Getenv("MONGO_INITDB_ROOT_USERNAME"),
 		os.Getenv("MONGO_INITDB_ROOT_PASSWORD"),
@@ -68,7 +68,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	database := db.Client.Database(os.Getenv("MONGODB_DATABASE"))
+	database := mongoDB.Client.Database(os.Getenv("MONGODB_DATABASE"))
 	collections, err := database.ListCollectionNames(ctx, bson.D{})
 	if err != nil {
 		log.Fatal(err.Error())
@@ -93,7 +93,18 @@ func init() {
 		log.Info("Collection `recipe` already exists! No data is inserted.")
 	}
 
-	recipesHandler = handlers.NewRecipesHandler(ctx, collection)
+	// Connect to redis
+	redis, err := databases.ConnectToRedis(
+		ctx,
+		os.Getenv("REDIS_PASSWORD"),
+		os.Getenv("REDIS_HOST"),
+		os.Getenv("REDIS_PORT"),
+	)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redis.Client)
 
 }
 
