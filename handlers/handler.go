@@ -20,7 +20,15 @@ import (
 type RecipesHandler struct {
 	Collection  *mongo.Collection
 	Ctx         context.Context
-	redisClient *redis.Client
+	RedisClient *redis.Client
+}
+
+func NewRecipesHandler(ctx context.Context, collection *mongo.Collection, redisClient *redis.Client) *RecipesHandler {
+	return &RecipesHandler{
+		Collection:  collection,
+		Ctx:         ctx,
+		RedisClient: redisClient,
+	}
 }
 
 // ListRecipes		godoc
@@ -33,18 +41,9 @@ type RecipesHandler struct {
 // @Success		200	{array}		models.Recipe
 // @Failure		500	{object}	models.Error
 // @Router		/recipes [get]
-func NewRecipesHandler(ctx context.Context, collection *mongo.Collection, redisClient *redis.Client) *RecipesHandler {
-	return &RecipesHandler{
-		Collection:  collection,
-		Ctx:         ctx,
-		redisClient: redisClient,
-	}
-}
-
-// Defining receiver functions for `RecipesHandler`
 func (handler *RecipesHandler) ListRecipes(c *gin.Context) {
 	// look for hit in redis cache first
-	val, err := handler.redisClient.Get("recipes").Result()
+	val, err := handler.RedisClient.Get("recipes").Result()
 	if err == redis.Nil {
 		log.Println("Request to MongoDB")
 		// `collection` assigned in `init()`
@@ -66,7 +65,7 @@ func (handler *RecipesHandler) ListRecipes(c *gin.Context) {
 
 		// store in redis for later hits
 		data, _ := json.Marshal(recipes)
-		handler.redisClient.Set("recipes", string(data), 0)
+		handler.RedisClient.Set("recipes", string(data), 0)
 		c.JSON(http.StatusOK, recipes)
 	} else if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -102,7 +101,7 @@ func (handler *RecipesHandler) NewRecipe(c *gin.Context) {
 		// if request body is invalid raise status code 400
 		c.JSON(http.StatusBadRequest, gin.H{
 			"statusCode": http.StatusBadRequest,
-			"error":      err.Error(),
+			"error":      fmt.Sprintf("Invalid request body, err = %s", err.Error()),
 		})
 		return
 	}
@@ -114,13 +113,13 @@ func (handler *RecipesHandler) NewRecipe(c *gin.Context) {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"statusCode": http.StatusInternalServerError,
-			"error":      "Error inserting a new recipe!",
+			"error":      fmt.Sprintf("Error inserting a new recipe, err = %s", err.Error()),
 		})
 		return
 	}
 
 	log.Println("Remove data from Redis")
-	handler.redisClient.Del("recipes")
+	handler.RedisClient.Del("recipes")
 
 	// successful
 	c.JSON(http.StatusOK, recipe)
@@ -187,7 +186,7 @@ func (handler *RecipesHandler) UpdateRecipe(c *gin.Context) {
 	}
 
 	log.Println("Remove data from Redis")
-	handler.redisClient.Del("recipes")
+	handler.RedisClient.Del("recipes")
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Recipe has been updated!",
@@ -211,7 +210,7 @@ func (handler *RecipesHandler) ListRecipe(c *gin.Context) {
 	if !found {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"statusCode": http.StatusInternalServerError,
-			"error":      "ID parameter not provided.",
+			"error":      "ID parameter not provided",
 		})
 		return
 	}
@@ -221,25 +220,31 @@ func (handler *RecipesHandler) ListRecipe(c *gin.Context) {
 		log.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"statusCode": http.StatusBadRequest,
-			"error":      err.Error(),
+			"error":      fmt.Sprintf("Invalid ObjectId, err = %s", err.Error()),
 		})
+		return
 	}
 
 	var recipe models.Recipe
 	err = handler.Collection.FindOne(handler.Ctx,
-		bson.M{"_id": objectId},
+		bson.D{{Key: "_id", Value: objectId}},
 	).Decode(&recipe)
 	if err != nil {
 		// no documents retrieved
 		if err == mongo.ErrNoDocuments {
 			c.JSON(http.StatusNotFound, gin.H{
 				"statusCode": http.StatusNotFound,
+				"error":      fmt.Sprintf("Recipe not found, err = %s", err.Error()),
+			})
+			return
+		} else {
+			log.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"statusCode": http.StatusInternalServerError,
 				"error":      err.Error(),
 			})
 			return
 		}
-		// unknown error
-		log.Error(err)
 	}
 
 	c.JSON(http.StatusOK, recipe)
