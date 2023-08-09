@@ -12,5 +12,26 @@ services:
     env_file:
       - .env
     command: [ --auth ]
+  redis:
+    container_name: recipe-redis
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+      - ./redis.conf:/usr/local/etc/redis
+    env_file:
+      - .env
+    command: [ "--requirepass ${REDIS_PASSWORD}" ]
+  redis-insight:
+    container_name: redis-insight
+    image: redislabs/redisinsight:latest
+    restart: always
+    ports:
+      - "8001:8001"
+    links:
+      - redis
 volumes:
   mongodb-data:
+  redis-data:
