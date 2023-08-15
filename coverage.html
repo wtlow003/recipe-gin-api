@@ -104,14 +104,14 @@ func NewRecipesHandler(ctx context.Context, collection *mongo.Collection, redisC
 
 // ListRecipes                godoc
 //
-// @Summary                List recipes
-// @Description        get all recipes
-// @Tags                recipes
-// @Accept                json
-// @Produce                json
-// @Success                200        {array}                models.Recipe
-// @Failure                500        {object}        models.Error
-// @Router                /recipes [get]
+//        @Summary                List recipes
+//        @Description        get all recipes
+//        @Tags                        recipes
+//        @Accept                        json
+//        @Produce                json
+//        @Success                200        {array}                models.Recipe
+//        @Failure                500        {object}        models.Error
+//        @Router                        /recipes [get]
 func (handler *RecipesHandler) ListRecipes(c *gin.Context) <span class="cov8" title="1">{
         // look for hit in redis cache first
         val, err := handler.RedisClient.Get("recipes").Result()
@@ -155,16 +155,16 @@ func (handler *RecipesHandler) ListRecipes(c *gin.Context) <span class="cov8" ti
 
 // NewRecipe                godoc
 //
-// @Summary                        Create recipe
-// @Description         create new recipe
-// @Tags                        recipes
-// @Accept                        json
-// @Produce                        json
-// @Param                        recipe        body        models.UserDefinedRecipe true        "New recipe"
-// @Success                        200 {object}        models.Recipe
-// @Failure                        400 {object}        models.Error
-// @Failure                        500 {object}        models.Error
-// @Router                        /recipes [post]
+//        @Summary                Create recipe
+//        @Description        create new recipe
+//        @Tags                        recipes
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        recipe        body                models.UserDefinedRecipe        true        "New recipe"
+//        @Success                200                {object}        models.Recipe
+//        @Failure                400                {object}        models.Error
+//        @Failure                500                {object}        models.Error
+//        @Router                        /recipes [post]
 func (handler *RecipesHandler) NewRecipe(c *gin.Context) <span class="cov8" title="1">{
         var recipe models.Recipe
         // bind request body into `Recipe` struct
@@ -197,16 +197,17 @@ func (handler *RecipesHandler) NewRecipe(c *gin.Context) <span class="cov8" titl
 }
 
 // UpdateRecipe        godoc
-// @Summary                Update recipe
-// @Tags                recipes
-// @Accept                json
-// @Produce                json
-// @Param                id        path                 string        true         "Recipe ID"
-// @Param                recipe        body        models.Recipe true        "Updated receipe"
-// @Success                200 {object}        models.Message
-// @Failure                400        {object}        models.Error
-// @Failure                500        {object}        models.Error
-// @Router                /recipes/{id}        [put]
+//
+//        @Summary        Update recipe
+//        @Tags                recipes
+//        @Accept                json
+//        @Produce        json
+//        @Param                id                                path                string                        true        "Recipe ID"
+//        @Param                recipe                        body                models.Recipe        true        "Updated receipe"
+//        @Success        200                                {object}        models.Message
+//        @Failure        400                                {object}        models.Error
+//        @Failure        500                                {object}        models.Error
+//        @Router                /recipes/{id}        [put]
 func (handler *RecipesHandler) UpdateRecipe(c *gin.Context) <span class="cov0" title="0">{
         // recipe id
         id, found := c.Params.Get("id")
@@ -267,16 +268,17 @@ func (handler *RecipesHandler) UpdateRecipe(c *gin.Context) <span class="cov0" t
 }
 
 // ListRecipe        godoc
-// @Summary                List recipe
-// @Tags                recipes
-// @Accept                json
-// @Produce                json
-// @Param                id        path                 string        true         "Recipe ID"
-// @Success                200 {object}        models.Recipe
-// @Failure                400 {object}        models.Error
-// @Failure                404        {object}        models.Error
-// @Failure                500        {object}        models.Error
-// @Router                /recipes/{id}        [get]
+//
+//        @Summary        List recipe
+//        @Tags                recipes
+//        @Accept                json
+//        @Produce        json
+//        @Param                id                                path                string        true        "Recipe ID"
+//        @Success        200                                {object}        models.Recipe
+//        @Failure        400                                {object}        models.Error
+//        @Failure        404                                {object}        models.Error
+//        @Failure        500                                {object}        models.Error
+//        @Router                /recipes/{id}        [get]
 func (handler *RecipesHandler) ListRecipe(c *gin.Context) <span class="cov8" title="1">{
         id, found := c.Params.Get("id")
         if !found </span><span class="cov8" title="1">{
@@ -323,15 +325,16 @@ func (handler *RecipesHandler) ListRecipe(c *gin.Context) <span class="cov8" tit
 }
 
 // DeleteRecipe        godoc
-// @Summary                Delete recipe
-// @Tags                recipes
-// @Accept                json
-// @Produce                json
-// @Param                id        path                 string        true         "Recipe ID"
-// @Success                200 {object}        models.Message
-// @Failure                400        {object}        models.Error
-// @Failure                500        {object}        models.Error
-// @Router                /recipes/{id}        [delete]
+//
+//        @Summary        Delete recipe
+//        @Tags                recipes
+//        @Accept                json
+//        @Produce        json
+//        @Param                id                                path                string        true        "Recipe ID"
+//        @Success        200                                {object}        models.Message
+//        @Failure        400                                {object}        models.Error
+//        @Failure        500                                {object}        models.Error
+//        @Router                /recipes/{id}        [delete]
 func (handler *RecipesHandler) DeleteRecipe(c *gin.Context) <span class="cov8" title="1">{
         id, found := c.Params.Get("id")
         if !found </span><span class="cov8" title="1">{
@@ -370,15 +373,16 @@ func (handler *RecipesHandler) DeleteRecipe(c *gin.Context) <span class="cov8" t
 }
 
 // SearchRecipe        godoc
-// @Summary                Search recipes by tag
-// @Tags                recipes
-// @Accept                json
-// @Produce                json
-// @Param                tag        query                 string        true         "Recipe search by tag"
-// @Success                200 {array}                models.Recipe
-// @Failure                400        {object}        models.Error
-// @Failure                500 {object}        models.Error
-// @Router                /recipes/search        [get]
+//
+//        @Summary        Search recipes by tag
+//        @Tags                recipes
+//        @Accept                json
+//        @Produce        json
+//        @Param                tag                                query                string        true        "Recipe search by tag"
+//        @Success        200                                {array}                models.Recipe
+//        @Failure        400                                {object}        models.Error
+//        @Failure        500                                {object}        models.Error
+//        @Router                /recipes/search        [get]
 func (handler *RecipesHandler) SearchRecipe(c *gin.Context) <span class="cov8" title="1">{
         tag := c.Query("tag")
         if tag == "" </span><span class="cov8" title="1">{
