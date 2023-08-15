@@ -308,6 +308,10 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "message"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 200
                 }
             }
         },
