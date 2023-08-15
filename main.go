@@ -22,7 +22,6 @@ import (
 )
 
 var recipes []models.Recipe
-var ctx context.Context
 var collection *mongo.Collection
 var recipesHandler *handlers.RecipesHandler
 
@@ -154,5 +153,7 @@ func main() {
 		v1.DELETE("/recipes/:id", recipesHandler.DeleteRecipe)
 	}
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	r.Run(":8080")
+	if err := r.Run(":8080"); err != nil {
+		log.Fatalf("Unable to start server, err = %s", err.Error())
+	}
 }

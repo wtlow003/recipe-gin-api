@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/wtlow003/recipe-gin-api/models"
 )
@@ -28,7 +29,10 @@ func TestListRecipes(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	var recipes []models.Recipe
-	json.Unmarshal(w.Body.Bytes(), &recipes)
+	err := json.Unmarshal(w.Body.Bytes(), &recipes)
+	if err != nil {
+		log.Errorf("Unable to unmarshal response body.")
+	}
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.LessOrEqual(t, 518, len(recipes))
