@@ -6,5 +6,6 @@ type Error struct {
 }
 
 type Message struct {
-	Message string `json:"message" example:"message"`
+	StatusCode int    `json:"statusCode" example:"200"`
+	Message    string `json:"message" example:"message"`
 }

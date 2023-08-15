@@ -20,31 +20,30 @@ import (
 type RecipesHandler struct {
 	Collection  *mongo.Collection
 	Ctx         context.Context
-	redisClient *redis.Client
+	RedisClient *redis.Client
 }
 
-// ListRecipes		godoc
-//
-// @Summary		List recipes
-// @Description	get all recipes
-// @Tags		recipes
-// @Accept		json
-// @Produce		json
-// @Success		200	{array}		models.Recipe
-// @Failure		500	{object}	models.Error
-// @Router		/recipes [get]
 func NewRecipesHandler(ctx context.Context, collection *mongo.Collection, redisClient *redis.Client) *RecipesHandler {
 	return &RecipesHandler{
 		Collection:  collection,
 		Ctx:         ctx,
-		redisClient: redisClient,
+		RedisClient: redisClient,
 	}
 }
 
-// Defining receiver functions for `RecipesHandler`
+// ListRecipes		godoc
+//
+//	@Summary		List recipes
+//	@Description	get all recipes
+//	@Tags			recipes
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		models.Recipe
+//	@Failure		500	{object}	models.Error
+//	@Router			/recipes [get]
 func (handler *RecipesHandler) ListRecipes(c *gin.Context) {
 	// look for hit in redis cache first
-	val, err := handler.redisClient.Get("recipes").Result()
+	val, err := handler.RedisClient.Get("recipes").Result()
 	if err == redis.Nil {
 		log.Println("Request to MongoDB")
 		// `collection` assigned in `init()`
@@ -66,7 +65,7 @@ func (handler *RecipesHandler) ListRecipes(c *gin.Context) {
 
 		// store in redis for later hits
 		data, _ := json.Marshal(recipes)
-		handler.redisClient.Set("recipes", string(data), 0)
+		handler.RedisClient.Set("recipes", string(data), 0)
 		c.JSON(http.StatusOK, recipes)
 	} else if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -85,16 +84,16 @@ func (handler *RecipesHandler) ListRecipes(c *gin.Context) {
 
 // NewRecipe		godoc
 //
-// @Summary			Create recipe
-// @Description 	create new recipe
-// @Tags			recipes
-// @Accept			json
-// @Produce			json
-// @Param			recipe	body	models.UserDefinedRecipe true	"New recipe"
-// @Success			200 {object}	models.Recipe
-// @Failure			400 {object}	models.Error
-// @Failure			500 {object}	models.Error
-// @Router			/recipes [post]
+//	@Summary		Create recipe
+//	@Description	create new recipe
+//	@Tags			recipes
+//	@Accept			json
+//	@Produce		json
+//	@Param			recipe	body		models.UserDefinedRecipe	true	"New recipe"
+//	@Success		200		{object}	models.Recipe
+//	@Failure		400		{object}	models.Error
+//	@Failure		500		{object}	models.Error
+//	@Router			/recipes [post]
 func (handler *RecipesHandler) NewRecipe(c *gin.Context) {
 	var recipe models.Recipe
 	// bind request body into `Recipe` struct
@@ -102,7 +101,7 @@ func (handler *RecipesHandler) NewRecipe(c *gin.Context) {
 		// if request body is invalid raise status code 400
 		c.JSON(http.StatusBadRequest, gin.H{
 			"statusCode": http.StatusBadRequest,
-			"error":      err.Error(),
+			"error":      fmt.Sprintf("Invalid request body, err = %s", err.Error()),
 		})
 		return
 	}
@@ -114,36 +113,37 @@ func (handler *RecipesHandler) NewRecipe(c *gin.Context) {
 		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"statusCode": http.StatusInternalServerError,
-			"error":      "Error inserting a new recipe!",
+			"error":      fmt.Sprintf("Error inserting a new recipe, err = %s", err.Error()),
 		})
 		return
 	}
 
 	log.Println("Remove data from Redis")
-	handler.redisClient.Del("recipes")
+	handler.RedisClient.Del("recipes")
 
 	// successful
 	c.JSON(http.StatusOK, recipe)
 }
 
 // UpdateRecipe	godoc
-// @Summary		Update recipe
-// @Tags		recipes
-// @Accept		json
-// @Produce		json
-// @Param		id	path 		string	true 	"Recipe ID"
-// @Param		recipe	body	models.Recipe true	"Updated receipe"
-// @Success		200 {object}	models.Message
-// @Failure		400	{object}	models.Error
-// @Failure		500	{object}	models.Error
-// @Router		/recipes/{id}	[put]
+//
+//	@Summary	Update recipe
+//	@Tags		recipes
+//	@Accept		json
+//	@Produce	json
+//	@Param		id				path		string			true	"Recipe ID"
+//	@Param		recipe			body		models.Recipe	true	"Updated receipe"
+//	@Success	200				{object}	models.Message
+//	@Failure	400				{object}	models.Error
+//	@Failure	500				{object}	models.Error
+//	@Router		/recipes/{id}	[put]
 func (handler *RecipesHandler) UpdateRecipe(c *gin.Context) {
 	// recipe id
 	id, found := c.Params.Get("id")
 	if !found {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"statusCode": http.StatusInternalServerError,
-			"error":      "ID parameter not provided.",
+			"error":      "ID parameter not provided",
 		})
 		return
 	}
@@ -161,7 +161,7 @@ func (handler *RecipesHandler) UpdateRecipe(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"statusCode": http.StatusBadRequest,
-			"error":      err.Error(),
+			"error":      fmt.Sprintf("Invalid ObjectId, err = %s", err.Error()),
 		})
 		return
 	}
@@ -187,31 +187,33 @@ func (handler *RecipesHandler) UpdateRecipe(c *gin.Context) {
 	}
 
 	log.Println("Remove data from Redis")
-	handler.redisClient.Del("recipes")
+	handler.RedisClient.Del("recipes")
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Recipe has been updated!",
+		"statusCode": http.StatusOK,
+		"message":    "Recipe has been updated!",
 	})
 
 }
 
 // ListRecipe	godoc
-// @Summary		List recipe
-// @Tags		recipes
-// @Accept		json
-// @Produce		json
-// @Param		id	path 		string	true 	"Recipe ID"
-// @Success		200 {object}	models.Recipe
-// @Failure		400 {object}	models.Error
-// @Failure		404	{object}	models.Error
-// @Failure		500	{object}	models.Error
-// @Router		/recipes/{id}	[get]
+//
+//	@Summary	List recipe
+//	@Tags		recipes
+//	@Accept		json
+//	@Produce	json
+//	@Param		id				path		string	true	"Recipe ID"
+//	@Success	200				{object}	models.Recipe
+//	@Failure	400				{object}	models.Error
+//	@Failure	404				{object}	models.Error
+//	@Failure	500				{object}	models.Error
+//	@Router		/recipes/{id}	[get]
 func (handler *RecipesHandler) ListRecipe(c *gin.Context) {
 	id, found := c.Params.Get("id")
 	if !found {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"statusCode": http.StatusInternalServerError,
-			"error":      "ID parameter not provided.",
+			"error":      "ID parameter not provided",
 		})
 		return
 	}
@@ -221,46 +223,53 @@ func (handler *RecipesHandler) ListRecipe(c *gin.Context) {
 		log.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"statusCode": http.StatusBadRequest,
-			"error":      err.Error(),
+			"error":      fmt.Sprintf("Invalid ObjectId, err = %s", err.Error()),
 		})
+		return
 	}
 
 	var recipe models.Recipe
 	err = handler.Collection.FindOne(handler.Ctx,
-		bson.M{"_id": objectId},
+		bson.D{{Key: "_id", Value: objectId}},
 	).Decode(&recipe)
 	if err != nil {
 		// no documents retrieved
 		if err == mongo.ErrNoDocuments {
 			c.JSON(http.StatusNotFound, gin.H{
 				"statusCode": http.StatusNotFound,
+				"error":      fmt.Sprintf("Recipe not found, err = %s", err.Error()),
+			})
+			return
+		} else {
+			log.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"statusCode": http.StatusInternalServerError,
 				"error":      err.Error(),
 			})
 			return
 		}
-		// unknown error
-		log.Error(err)
 	}
 
 	c.JSON(http.StatusOK, recipe)
 }
 
 // DeleteRecipe	godoc
-// @Summary		Delete recipe
-// @Tags		recipes
-// @Accept		json
-// @Produce		json
-// @Param		id	path 		string	true 	"Recipe ID"
-// @Success		200 {object}	models.Message
-// @Failure		400	{object}	models.Error
-// @Failure		500	{object}	models.Error
-// @Router		/recipes/{id}	[delete]
+//
+//	@Summary	Delete recipe
+//	@Tags		recipes
+//	@Accept		json
+//	@Produce	json
+//	@Param		id				path		string	true	"Recipe ID"
+//	@Success	200				{object}	models.Message
+//	@Failure	400				{object}	models.Error
+//	@Failure	500				{object}	models.Error
+//	@Router		/recipes/{id}	[delete]
 func (handler *RecipesHandler) DeleteRecipe(c *gin.Context) {
 	id, found := c.Params.Get("id")
 	if !found {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"statusCode": http.StatusInternalServerError,
-			"error":      "ID parameter not provided.",
+			"error":      "ID parameter not provided",
 		})
 		return
 	}
@@ -270,8 +279,9 @@ func (handler *RecipesHandler) DeleteRecipe(c *gin.Context) {
 		log.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"statusCode": http.StatusBadRequest,
-			"error":      err.Error(),
+			"error":      fmt.Sprintf("Invalid ObjectId, err = %s", err.Error()),
 		})
+		return
 	}
 
 	res, err := handler.Collection.DeleteOne(handler.Ctx, bson.M{"_id": objectId})
@@ -286,27 +296,30 @@ func (handler *RecipesHandler) DeleteRecipe(c *gin.Context) {
 
 	format := "Deleted %d recipe!"
 	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf(format, res.DeletedCount),
+		"statusCode": http.StatusOK,
+		"message":    fmt.Sprintf(format, res.DeletedCount),
 	})
 }
 
 // SearchRecipe	godoc
-// @Summary		Search recipes by tag
-// @Tags		recipes
-// @Accept		json
-// @Produce		json
-// @Param		tag	query 		string	true 	"Recipe search by tag"
-// @Success		200 {array}		models.Recipe
-// @Failure		400	{object}	models.Error
-// @Failure		500 {object}	models.Error
-// @Router		/recipes/search	[get]
+//
+//	@Summary	Search recipes by tag
+//	@Tags		recipes
+//	@Accept		json
+//	@Produce	json
+//	@Param		tag				query		string	true	"Recipe search by tag"
+//	@Success	200				{array}		models.Recipe
+//	@Failure	400				{object}	models.Error
+//	@Failure	500				{object}	models.Error
+//	@Router		/recipes/search	[get]
 func (handler *RecipesHandler) SearchRecipe(c *gin.Context) {
 	tag := c.Query("tag")
 	if tag == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"statuCode": http.StatusBadRequest,
-			"error":     "`tag` parameter is required.",
+			"statusCode": http.StatusBadRequest,
+			"error":      "`tag` query parameter is required.",
 		})
+		return
 	}
 
 	query := make([]string, 0)
@@ -320,6 +333,7 @@ func (handler *RecipesHandler) SearchRecipe(c *gin.Context) {
 			"statusCode": http.StatusInternalServerError,
 			"error":      err.Error(),
 		})
+		return
 	}
 	defer cursor.Close(handler.Ctx)
 
@@ -327,6 +341,7 @@ func (handler *RecipesHandler) SearchRecipe(c *gin.Context) {
 	for cursor.Next(handler.Ctx) {
 		var recipe models.Recipe
 		cursor.Decode(&recipe)
+		fmt.Println(recipe)
 		recipes = append(recipes, recipe)
 	}
 	c.JSON(http.StatusOK, recipes)

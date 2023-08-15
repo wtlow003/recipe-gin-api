@@ -22,7 +22,6 @@ import (
 )
 
 var recipes []models.Recipe
-var ctx context.Context
 var collection *mongo.Collection
 var recipesHandler *handlers.RecipesHandler
 
@@ -108,6 +107,18 @@ func init() {
 
 }
 
+// Setup Gin Engine
+func SetupServer() *gin.Engine {
+	gin.SetMode(gin.DebugMode)
+	r := gin.Default()
+
+	// refer to: https://medium.com/pengenpaham/implement-basic-logging-with-gin-and-logrus-5f36fba69b28
+	// r.Use(gin.Recovery())
+	// r.Use(middlewares.LoggingMiddleware())
+
+	return r
+}
+
 //	@title			Recipe API
 //	@version		1.0
 //	@description	Demo recipe RESTful API developed with Gin framework.
@@ -128,12 +139,8 @@ func init() {
 // @externalDocs.description	OpenAPI
 // @externalDocs.url			https://swagger.io/resources/open-api/
 func main() {
-	gin.SetMode(gin.DebugMode)
-	r := gin.Default()
 
-	// refer to: https://medium.com/pengenpaham/implement-basic-logging-with-gin-and-logrus-5f36fba69b28
-	// r.Use(gin.Recovery())
-	// r.Use(middlewares.LoggingMiddleware())
+	r := SetupServer()
 
 	// similar to FastAPI's router: https://fastapi.tiangolo.com/tutorial/bigger-applications/
 	v1 := r.Group("/api/v1")
@@ -146,5 +153,7 @@ func main() {
 		v1.DELETE("/recipes/:id", recipesHandler.DeleteRecipe)
 	}
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	r.Run(":8080")
+	if err := r.Run(":8080"); err != nil {
+		log.Fatalf("Unable to start server, err = %s", err.Error())
+	}
 }
