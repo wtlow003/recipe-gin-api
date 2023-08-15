@@ -55,7 +55,7 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com/wtlow003/recipe-gin-api/handlers/handler.go (47.6%)</option>
+				<option value="file0">github.com/wtlow003/recipe-gin-api/handlers/handler.go (78.0%)</option>
 				
 				</select>
 			</div>
@@ -260,7 +260,8 @@ func (handler *RecipesHandler) UpdateRecipe(c *gin.Context) <span class="cov0" t
         handler.RedisClient.Del("recipes")
 
         c.JSON(http.StatusOK, gin.H{
-                "message": "Recipe has been updated!",
+                "statusCode": http.StatusOK,
+                "message":    "Recipe has been updated!",
         })</span>
 
 }
@@ -302,7 +303,7 @@ func (handler *RecipesHandler) ListRecipe(c *gin.Context) <span class="cov8" tit
         ).Decode(&amp;recipe)
         if err != nil </span><span class="cov8" title="1">{
                 // no documents retrieved
-                if err == mongo.ErrNoDocuments </span><span class="cov0" title="0">{
+                if err == mongo.ErrNoDocuments </span><span class="cov8" title="1">{
                         c.JSON(http.StatusNotFound, gin.H{
                                 "statusCode": http.StatusNotFound,
                                 "error":      fmt.Sprintf("Recipe not found, err = %s", err.Error()),
@@ -331,27 +332,28 @@ func (handler *RecipesHandler) ListRecipe(c *gin.Context) <span class="cov8" tit
 // @Failure                400        {object}        models.Error
 // @Failure                500        {object}        models.Error
 // @Router                /recipes/{id}        [delete]
-func (handler *RecipesHandler) DeleteRecipe(c *gin.Context) <span class="cov0" title="0">{
+func (handler *RecipesHandler) DeleteRecipe(c *gin.Context) <span class="cov8" title="1">{
         id, found := c.Params.Get("id")
-        if !found </span><span class="cov0" title="0">{
+        if !found </span><span class="cov8" title="1">{
                 c.JSON(http.StatusInternalServerError, gin.H{
                         "statusCode": http.StatusInternalServerError,
-                        "error":      "ID parameter not provided.",
+                        "error":      "ID parameter not provided",
                 })
                 return
         }</span>
 
-        <span class="cov0" title="0">objectId, err := primitive.ObjectIDFromHex(id)
-        if err != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">objectId, err := primitive.ObjectIDFromHex(id)
+        if err != nil </span><span class="cov8" title="1">{
                 log.Error(err)
                 c.JSON(http.StatusBadRequest, gin.H{
                         "statusCode": http.StatusBadRequest,
-                        "error":      err.Error(),
+                        "error":      fmt.Sprintf("Invalid ObjectId, err = %s", err.Error()),
                 })
+                return
         }</span>
 
-        <span class="cov0" title="0">res, err := handler.Collection.DeleteOne(handler.Ctx, bson.M{"_id": objectId})
-        if err != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">res, err := handler.Collection.DeleteOne(handler.Ctx, bson.M{"_id": objectId})
+        if err != nil </span><span class="cov8" title="1">{
                 log.Error(err)
                 c.JSON(http.StatusInternalServerError, gin.H{
                         "statusCode": http.StatusInternalServerError,
@@ -360,9 +362,10 @@ func (handler *RecipesHandler) DeleteRecipe(c *gin.Context) <span class="cov0" t
                 return
         }</span>
 
-        <span class="cov0" title="0">format := "Deleted %d recipe!"
+        <span class="cov8" title="1">format := "Deleted %d recipe!"
         c.JSON(http.StatusOK, gin.H{
-                "message": fmt.Sprintf(format, res.DeletedCount),
+                "statusCode": http.StatusOK,
+                "message":    fmt.Sprintf(format, res.DeletedCount),
         })</span>
 }
 
@@ -376,36 +379,39 @@ func (handler *RecipesHandler) DeleteRecipe(c *gin.Context) <span class="cov0" t
 // @Failure                400        {object}        models.Error
 // @Failure                500 {object}        models.Error
 // @Router                /recipes/search        [get]
-func (handler *RecipesHandler) SearchRecipe(c *gin.Context) <span class="cov0" title="0">{
+func (handler *RecipesHandler) SearchRecipe(c *gin.Context) <span class="cov8" title="1">{
         tag := c.Query("tag")
-        if tag == "" </span><span class="cov0" title="0">{
+        if tag == "" </span><span class="cov8" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{
-                        "statuCode": http.StatusBadRequest,
-                        "error":     "`tag` parameter is required.",
+                        "statusCode": http.StatusBadRequest,
+                        "error":      "`tag` query parameter is required.",
                 })
+                return
         }</span>
 
-        <span class="cov0" title="0">query := make([]string, 0)
+        <span class="cov8" title="1">query := make([]string, 0)
         cursor, err := handler.Collection.Find(handler.Ctx, bson.M{
                 "tags": bson.M{
                         "$in": append(query, tag),
                 },
         })
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 c.JSON(http.StatusInternalServerError, gin.H{
                         "statusCode": http.StatusInternalServerError,
                         "error":      err.Error(),
                 })
+                return
         }</span>
-        <span class="cov0" title="0">defer cursor.Close(handler.Ctx)
+        <span class="cov8" title="1">defer cursor.Close(handler.Ctx)
 
         recipes := make([]models.Recipe, 0)
-        for cursor.Next(handler.Ctx) </span><span class="cov0" title="0">{
+        for cursor.Next(handler.Ctx) </span><span class="cov8" title="1">{
                 var recipe models.Recipe
                 cursor.Decode(&amp;recipe)
+                fmt.Println(recipe)
                 recipes = append(recipes, recipe)
         }</span>
-        <span class="cov0" title="0">c.JSON(http.StatusOK, recipes)</span>
+        <span class="cov8" title="1">c.JSON(http.StatusOK, recipes)</span>
 }
 </pre>
 		
