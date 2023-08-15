@@ -143,7 +143,7 @@ func (handler *RecipesHandler) UpdateRecipe(c *gin.Context) {
 	if !found {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"statusCode": http.StatusInternalServerError,
-			"error":      "ID parameter not provided.",
+			"error":      "ID parameter not provided",
 		})
 		return
 	}
@@ -161,7 +161,7 @@ func (handler *RecipesHandler) UpdateRecipe(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"statusCode": http.StatusBadRequest,
-			"error":      err.Error(),
+			"error":      fmt.Sprintf("Invalid ObjectId, err = %s", err.Error()),
 		})
 		return
 	}

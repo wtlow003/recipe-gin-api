@@ -126,6 +126,101 @@ func TestListRecipes(t *testing.T) {
 	})
 }
 
+func TestUpdateRecipe(t *testing.T) {
+	// Arrange
+	mockCollection := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
+	defer mockCollection.Close()
+
+	mockCollection.Run("TestInvalidObjectID", func(mt *mtest.T) {
+		recipeCollection := mt.Coll
+		invalidId := "invalid"
+		requestBody := models.Recipe{
+			Name: "Singapore Noodle",
+		}
+		jsonVal, _ := json.Marshal(requestBody)
+
+		// `mocking` redis: https://itnext.io/golang-testing-mocking-redis-b48d09386c70
+		s := miniredis.RunT(t)
+		redisClient := redis.NewClient(&redis.Options{
+			Addr: s.Addr(),
+		})
+		handler := RecipesHandler{
+			Collection:  recipeCollection,
+			Ctx:         context.Background(),
+			RedisClient: redisClient,
+		}
+
+		// Act
+		r := gin.Default()
+		r.PUT("/recipes/:id", handler.UpdateRecipe)
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/recipes/%s", invalidId), bytes.NewBuffer(jsonVal))
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		var error models.Error
+		json.Unmarshal(w.Body.Bytes(), &error)
+
+		assert.Equal(t, 400, error.StatusCode)
+		assert.True(t, strings.Contains(error.Error, "Invalid ObjectId"))
+	})
+	mockCollection.Run("TestMissingPathParameter", func(mt *mtest.T) {
+		recipeCollection := mt.Coll
+
+		// `mocking` redis: https://itnext.io/golang-testing-mocking-redis-b48d09386c70
+		s := miniredis.RunT(t)
+		redisClient := redis.NewClient(&redis.Options{
+			Addr: s.Addr(),
+		})
+		handler := RecipesHandler{
+			Collection:  recipeCollection,
+			Ctx:         context.Background(),
+			RedisClient: redisClient,
+		}
+
+		// Act
+		r := gin.Default()
+		r.PUT("/recipes/", handler.UpdateRecipe)
+		req, _ := http.NewRequest("PUT", "/recipes/", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		var error models.Error
+		json.Unmarshal(w.Body.Bytes(), &error)
+
+		assert.Equal(t, 500, error.StatusCode)
+		assert.Equal(t, error.Error, "ID parameter not provided")
+	})
+	mockCollection.Run("TestInvalidRequestBody", func(mt *mtest.T) {
+		// Arrange
+		recipeCollection := mt.Coll
+		id := primitive.NewObjectID()
+		invalidRequestBody := []byte("")
+
+		// `mocking` redis: https://itnext.io/golang-testing-mocking-redis-b48d09386c70
+		s := miniredis.RunT(t)
+		redisClient := redis.NewClient(&redis.Options{
+			Addr: s.Addr(),
+		})
+		handler := RecipesHandler{
+			Collection:  recipeCollection,
+			Ctx:         context.Background(),
+			RedisClient: redisClient,
+		}
+
+		// Act
+		r := gin.Default()
+		r.PUT("/recipes/:id", handler.UpdateRecipe)
+		req, _ := http.NewRequest("PUT", fmt.Sprintf("/recipes/%s", id.Hex()), bytes.NewBuffer(invalidRequestBody))
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		var error models.Error
+		json.Unmarshal(w.Body.Bytes(), &error)
+
+		assert.Equal(t, 400, error.StatusCode)
+	})
+}
+
 func TestListRecipe(t *testing.T) {
 	// Arrange
 	mockCollection := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
