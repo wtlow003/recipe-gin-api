@@ -1,5 +1,19 @@
 version: "3.9"
 services:
+  api:
+    build: .
+    env_file:
+      - .env
+    networks:
+      - api_network
+    ports:
+      - "8070-8072:8080"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    scale: 3
   mongodb:
     container_name: recipe-mongodb
     image: mongo:latest
@@ -12,6 +26,14 @@ services:
     env_file:
       - .env
     command: [ --auth ]
+    networks:
+      - api_network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh admin -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --quiet | grep 1
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
   redis:
     container_name: recipe-redis
     image: redis:latest
@@ -24,14 +46,35 @@ services:
     env_file:
       - .env
     command: [ "--requirepass ${REDIS_PASSWORD}" ]
-  redis-insight:
-    container_name: redis-insight
-    image: redislabs/redisinsight:latest
-    restart: always
+    networks:
+      - api_network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+  # redis-insight:
+  #   container_name: redis-insight
+  #   image: redislabs/redisinsight:latest
+  #   restart: always
+  #   ports:
+  #     - "8001:8001"
+  #   links:
+  #     - redis
+  #   networks:
+  #     - api_network
+  prometheus:
+    image: prom/prometheus:v2.27.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
-      - "8001:8001"
-    links:
-      - redis
+      - "9090:9090"
+    restart: always
 volumes:
   mongodb-data:
   redis-data:
+
+
+networks:
+  api_network:
+    driver: bridge

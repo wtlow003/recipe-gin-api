@@ -8,6 +8,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -26,6 +29,30 @@ var ctx context.Context
 var collection *mongo.Collection
 var recipesHandler *handlers.RecipesHandler
 
+// prometheus setup
+var totalRequests = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "http_requests_total",
+		Help: "Number of incoming requests",
+	},
+	[]string{"path"},
+)
+var totalHTTPMethods = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "http_methods_total",
+		Help: "Number of requests per HTTP method",
+	},
+	[]string{"method"},
+)
+
+var httpDuration = promauto.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Name: "http_response_time_seconds",
+		Help: "Duration of HTTP requests",
+	},
+	[]string{"path"},
+)
+
 func init() {
 	// load env variable
 	err := godotenv.Load()
@@ -43,7 +70,7 @@ func init() {
 	log.SetFormatter(&log.JSONFormatter{})
 
 	// setup mongodb connections
-	ctx := context.Background()
+	ctx = context.Background()
 	mongoDB, err := databases.ConnectToMongoDB(
 		ctx,
 		os.Getenv("MONGO_INITDB_ROOT_USERNAME"),
@@ -106,6 +133,20 @@ func init() {
 
 	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redis.Client)
 
+	prometheus.Register(totalRequests)
+	prometheus.Register(totalHTTPMethods)
+	prometheus.Register(httpDuration)
+
+}
+
+func PrometheusMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		timer := prometheus.NewTimer(httpDuration.WithLabelValues(c.Request.URL.Path))
+		totalRequests.WithLabelValues(c.Request.URL.Path).Inc()
+		totalHTTPMethods.WithLabelValues(c.Request.Method).Inc()
+		c.Next()
+		timer.ObserveDuration()
+	}
 }
 
 //	@title			Recipe API
@@ -130,6 +171,7 @@ func init() {
 func main() {
 	gin.SetMode(gin.DebugMode)
 	r := gin.Default()
+	r.Use(PrometheusMiddleware())
 
 	// refer to: https://medium.com/pengenpaham/implement-basic-logging-with-gin-and-logrus-5f36fba69b28
 	// r.Use(gin.Recovery())
@@ -145,6 +187,7 @@ func main() {
 		v1.PUT("/recipes/:id", recipesHandler.UpdateRecipe)
 		v1.DELETE("/recipes/:id", recipesHandler.DeleteRecipe)
 	}
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.Run(":8080")
 }
