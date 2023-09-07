@@ -52,9 +52,13 @@ Else, the following [installation](#installation) section provides instructions 
 4. Run docker containers:
 
    ```bash
-   docker compose up --build
+   docker-compose up --build --no-start; docker-compose restart
+
+   # or
+
+   make container-up
    ```
-   `NOTE`: Using `docker-compose` instead of `docker compose` may resulting in port conflict when setting replicas for api container.
+   `NOTE`: Using simply `docker-compose up --build`, instead of above may resulting in port conflict when setting replicas for api container.
 
 The API should now be running on localhost (e.g., http://locahost:8080/api/v1/recipes) on port `8079-8081`.
 
@@ -67,7 +71,7 @@ Example:
 1. Retrieve all available recipes
 
     ```bash
-    curl http://localhost:8070/api/v1/recipes | jq -r
+    curl http://localhost:8080/api/v1/recipes | jq -r
 
     >>>
     [
@@ -113,7 +117,9 @@ Example:
 
 ## API Documentation.
 
-For detailed information on how to use the API, refer to documentation availble on [Swagger UI](http://localhost:8080/swagger/index.html).
+For detailed information on how to use the API, refer to documentation available on [Swagger UI](http://localhost:8080/swagger/index.html).
+
+![swagger-ui](./imgs/swagger-ui.png)
 
 ## License
 This project is licensed under the MIT License. See the '
